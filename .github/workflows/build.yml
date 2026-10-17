@@ -1,0 +1,75 @@
+name: Test and build desktop apps
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            build: dist:win
+            certificate: WIN_CERTIFICATE
+            certificate_password: WIN_CERTIFICATE_PASSWORD
+          - name: macOS
+            os: macos-latest
+            build: dist:mac
+            certificate: MAC_CERTIFICATE
+            certificate_password: MAC_CERTIFICATE_PASSWORD
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run test:desktop
+      - name: Build installers
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ] && [ -z "$CSC_LINK" ]; then
+            npm run "$BUILD_COMMAND" -- --publish never --config.mac.identity=- --config.mac.hardenedRuntime=false
+          elif [ -n "$CSC_LINK" ]; then
+            npm run "$BUILD_COMMAND" -- --publish never --config.forceCodeSigning=true
+          else
+            npm run "$BUILD_COMMAND" -- --publish never
+          fi
+        env:
+          # Without a certificate: unsigned Windows builds and ad-hoc signed Mac test builds.
+          BUILD_COMMAND: ${{ matrix.build }}
+          CSC_LINK: ${{ secrets[matrix.certificate] }}
+          CSC_KEY_PASSWORD: ${{ secrets[matrix.certificate_password] }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets[matrix.certificate] != '' && 'true' || 'false' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Save installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: Miso-${{ matrix.name }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
+      - name: Save desktop screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshots-${{ matrix.name }}
+          path: test-results/*.png
+          if-no-files-found: ignore
