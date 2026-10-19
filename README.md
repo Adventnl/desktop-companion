@@ -2,7 +2,7 @@
 
 A little ghost. A good little friend.
 
-Miso is a desktop companion for **Windows and macOS** built with Electron and the supplied transparent ghost cat artwork. It floats above ordinary windows, wanders across connected displays, plays with a ball of yarn, and naps when the day gets long. Everything runs locally, with no account, API key, or internet connection needed after installation.
+Miso is a desktop companion for **Windows and macOS** built with Electron. Open the app, click **Open Miso**, and the ghost cat appears on your desktop. It wanders, reacts to pets, plays, and naps. Everything runs locally, with no account, API key, or internet connection needed after installation.
 
 ## Install
 
@@ -19,14 +19,13 @@ Installers become available **after the workflow has run**; this checkout does n
 | --- | --- |
 | Click / tap the cat | Shows a little love (or wakes up) |
 | Drag the cat | Moves to your favorite corner |
-| Double-click the cat | Opens companion controls |
-| Right-click the cat | Opens the quick menu |
-| Click the tray / menu bar icon | Opens companion controls |
-| `Ctrl+Shift+M` / `⌘⇧M` | Recalls Miso to your cursor, disables click-through, and opens controls |
+| Right-click the cat | Opens actions: Sit still / Wander around, Change skin, Play, and Take a nap |
+| Click the tray / menu bar icon | Shows Miso |
+| `Ctrl+Shift+M` / `⌘⇧M` | Recalls Miso to your cursor |
 
-Controls include petting, play, sleep, four outfits, three sizes, roaming speed, reduced motion, visibility, click-through, and launch at login. **Closing the controls keeps Miso running.** Choose **Quit Miso** from the tray menu or Preferences to fully exit. Some Windows tray icons are under the overflow arrow.
+There is no dashboard or wardrobe window. The launcher has one button and closes when Miso opens. Right-click **Change skin** to choose Just Miso, Witch hat, Pumpkin, or Cardboard box. The chosen skin stays on while petting, playing, walking, and sleeping. All sprites share a fixed canvas and scale; clicking never resizes the pet. Choose **Quit Miso** from the right-click or tray menu to exit. Some Windows tray icons are under the overflow arrow.
 
-Transparent parts of the pet window pass clicks through to the desktop. Hovering the cat pauses roaming so it is easy to catch. Miso stays within display work areas, avoiding the dock and taskbar, and occasionally visits another connected screen. Preferences → **Next screen** moves it immediately. On monitor removal or wake from sleep, its position is brought back onto an available display.
+Transparent parts of the pet window pass clicks through to the desktop. Hovering the cat pauses roaming so it is easy to catch. **Sit still** stops roaming until you choose **Wander around**. The cat also pauses while its right-click menu is open. Miso stays within display work areas, avoiding the dock and taskbar, and occasionally visits another connected screen. On monitor removal or wake from sleep, its position is brought back onto an available display.
 
 The overlay sits above normal applications. Operating-system security prompts, the lock screen, some exclusive fullscreen games, and certain fullscreen apps can appear above it. No Accessibility, screen recording, or administrator permissions are needed for normal features. Touch works through ordinary pointer events on supported touch displays; macOS normally uses a mouse or trackpad.
 
@@ -64,8 +63,9 @@ In a cloud machine with a read-only home directory, use writable `XDG_CACHE_HOME
 - `src/main.js` owns native windows, the tray, settings, per-pixel mouse pass-through, multi-display movement, and IPC validation.
 - `src/core.js` contains pure movement, settings, and sprite-selection rules.
 - `src/preload.js` exposes a small API to sandboxed, isolated renderers. Node integration is disabled and pages enforce a restrictive content security policy.
-- `src/renderer/` contains the transparent companion and controls. No remote content, analytics, or external fonts are loaded.
-- `assets/cat/` contains all 22 original transparent PNGs. The supplied poses are still illustrations, not a complete animation sequence; two walking frames alternate during movement. Outfits use the supplied white cat artwork.
+- `src/renderer/` contains the transparent companion and single-button launcher. No remote content, analytics, or external fonts are loaded.
+- `assets/cat/hd/` contains the regenerated smooth artwork: 16 transparent, consistently aligned 320 × 320 frames for four skins and four poses. Every walking sprite faces right in the source; the renderer mirrors it for leftward travel. [Generation prompt and provenance](assets/cat/hd/GENERATION.md) are included. `scripts/prepare-sprites.cjs` mechanically slices the source sheet without redrawing or enlarging it.
+- `assets/cat/` retains the original supplied PNGs for provenance. The app uses the regenerated set with smooth interpolation rather than enlarging the old pixel art.
 
 Preferences are saved atomically in `settings.json` under Electron’s per-user app data directory (`%APPDATA%/Miso` on Windows, `~/Library/Application Support/Miso` on macOS). No application or activity data is transmitted. Provenance notes from the supplied archive are retained in `assets/ASSET-NOTES.txt`.
 

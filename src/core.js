@@ -45,11 +45,10 @@ function stepTowards(from, to, speed, deltaSeconds) {
 }
 
 function choosePose(settings, activity, moving, tick) {
-  if (settings.sleeping) return 'sleep';
-  if (activity) return activity;
-  if (settings.outfit !== 'none') return settings.outfit;
-  if (moving) return tick % 2 === 0 ? 'walk_1' : 'walk_2';
-  return settings.roaming ? 'float' : 'idle';
+  // Skin and behavior are independent: petting never swaps in a bare cat.
+  const skin = OUTFITS.includes(settings.outfit) ? settings.outfit : 'none';
+  const pose = settings.sleeping ? 'sleep' : moving && !activity ? (tick % 2 === 0 ? 'walk_1' : 'walk_2') : 'idle';
+  return `${skin}-${pose}`;
 }
 
 module.exports = { DEFAULTS, OUTFITS, SPEEDS, sanitizeSettings, petSize, clampPosition, randomTarget, stepTowards, choosePose };

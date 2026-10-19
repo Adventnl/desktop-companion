@@ -41,7 +41,7 @@ function state() {
   return {
     settings: { ...settings },
     pose: choosePose(settings, activity, moving, Math.floor(tick / 9)),
-    moving, facing, message, notice,
+    moving, facing, activity, message, notice,
     capabilities: { login: app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE && ['win32', 'darwin'].includes(process.platform) },
     version: app.getVersion(),
   };
@@ -93,8 +93,8 @@ function createPet() {
 function showPanel() {
   if (alive(panel)) { panel.show(); panel.focus(); return; }
   panel = new BrowserWindow({
-    width: 900, height: 750, minWidth: 800, minHeight: 690,
-    title: 'Miso · A little company', backgroundColor: '#f5f4ee',
+    width: 300, height: 294, resizable: false, maximizable: false,
+    title: 'Miso', backgroundColor: '#f7f7f2',
     autoHideMenuBar: true, show: false, icon: path.join(ROOT, 'assets/miso.png'),
     webPreferences: webPreferences(),
   });
@@ -106,25 +106,26 @@ function showPanel() {
 function makeTray() {
   const icon = process.platform === 'darwin'
     ? nativeImage.createFromPath(path.join(ROOT, 'assets/trayTemplate.png'))
-    : nativeImage.createFromPath(path.join(ROOT, 'assets/cat/idle.png')).resize({ width: 24, height: 24 });
+    : nativeImage.createFromPath(path.join(ROOT, 'assets/cat/hd/none-idle.png')).resize({ width: 24, height: 24 });
   if (process.platform === 'darwin') icon.setTemplateImage(true);
   tray = new Tray(icon);
   tray.setToolTip('Miso · Your ghost cat companion');
-  tray.on('click', showPanel);
-  tray.on('double-click', () => perform('recall'));
+  tray.on('click', () => perform('open'));
+  tray.on('double-click', () => perform('open'));
   refreshMenu();
 }
 function menuItems() {
   return [
-    { label: 'Miso · A little company', enabled: false },
+    { label: settings.roaming ? 'Sit still' : 'Wander around', click: () => updateSettings({ roaming: !settings.roaming, reducedMotion: false }) },
+    { label: 'Change skin', submenu: [
+      ['none', 'Just Miso'], ['hat', 'Witch hat'], ['pumpkin', 'Pumpkin'], ['box', 'Cardboard box'],
+    ].map(([outfit, label]) => ({ label, type: 'radio', checked: settings.outfit === outfit, click: () => updateSettings({ outfit }) })) },
     { type: 'separator' },
-    { label: 'Open companion controls', click: showPanel },
+    { label: 'Play', click: () => perform('play') },
+    { label: settings.sleeping ? 'Wake up' : 'Take a nap', click: () => perform('sleep') },
+    { type: 'separator' },
     { label: 'Bring Miso here', click: () => perform('recall') },
     { label: settings.hidden ? 'Show Miso' : 'Hide Miso', click: () => updateSettings({ hidden: !settings.hidden }) },
-    { label: settings.sleeping ? 'Wake up' : 'Take a nap', click: () => perform('sleep') },
-    { label: 'Wander around', type: 'checkbox', checked: settings.roaming, click: () => updateSettings({ roaming: !settings.roaming }) },
-    { label: 'Click through Miso', type: 'checkbox', checked: settings.clickThrough, click: () => updateSettings({ clickThrough: !settings.clickThrough }) },
-    { type: 'separator' },
     { label: 'Quit Miso', accelerator: 'CommandOrControl+Q', click: () => app.quit() },
   ];
 }
@@ -174,6 +175,7 @@ function react(pose, text, duration = 2600) {
 }
 function perform(action) {
   switch (action) {
+    case 'open': updateSettings({ hidden: false, clickThrough: false }); break;
     case 'pet':
       if (settings.sleeping) { updateSettings({ sleeping: false }); react('wake', 'Oh, hello there.'); }
       else react('interact', ['You make my day.', 'A little love. ♡', 'Right here with you.'][Math.floor(Math.random() * 3)]);
@@ -207,13 +209,13 @@ function perform(action) {
 // Hit-test the original sprite alpha, so even holes inside the sprite let clicks through.
 function onVisiblePixel(cursor, pose) {
   if (!masks.has(pose)) {
-    const image = nativeImage.createFromPath(path.join(ROOT, 'assets', 'cat', pose + '.png'));
+    const image = nativeImage.createFromPath(path.join(ROOT, 'assets', 'cat', 'hd', pose + '.png'));
     masks.set(pose, { ...image.getSize(), data: image.toBitmap() });
   }
   const mask = masks.get(pose), scale = settings.size;
-  const fit = Math.min(182 * scale / mask.width, 162 * scale / mask.height);
+  const fit = Math.min(218 * scale / mask.width, 194 * scale / mask.height);
   const width = mask.width * fit, height = mask.height * fit;
-  const left = position.x + 24 * scale + (182 * scale - width) / 2;
+  const left = position.x + 6 * scale + (218 * scale - width) / 2;
   const top = position.y + 222 * scale - 16 * scale - height;
   let x = Math.floor((cursor.x - left) / fit);
   const y = Math.floor((cursor.y - top) / fit);
@@ -281,7 +283,13 @@ function registerIPC() {
       target = null; moving = false;
     } else if (phase === 'end') endDrag();
   });
-  ipcMain.on('pet:menu', (event) => { if (validSender(event)) Menu.buildFromTemplate(menuItems()).popup(); });
+  ipcMain.on('pet:menu', (event) => {
+    if (!validSender(event)) return;
+    // Native menus provide keyboard navigation and close on outside clicks.
+    // Pause the cat for the entire menu interaction, including its skin submenu.
+    paused = true; moving = false;
+    Menu.buildFromTemplate(menuItems()).popup({ callback: () => { paused = false; lastTick = Date.now(); } });
+  });
   ipcMain.on('panel:open', (event) => { if (validSender(event)) showPanel(); });
   ipcMain.on('panel:close', (event) => { if (validSender(event) && alive(panel)) panel.close(); });
 }
@@ -293,8 +301,12 @@ function relocate() {
   pet.setPosition(position.x, position.y); queueSave();
 }
 
-app.on('second-instance', showPanel);
-app.on('activate', showPanel);
+function activate() {
+  if (alive(panel)) showPanel();
+  else if (alive(pet)) perform('open');
+}
+app.on('second-instance', activate);
+app.on('activate', activate);
 app.on('window-all-closed', () => {});
 app.on('before-quit', () => { quitting = true; clearInterval(loop); clearTimeout(saveTimer); if (position) persist(); globalShortcut.unregisterAll(); });
 
@@ -309,23 +321,26 @@ if (ownsLock) app.whenReady().then(async () => {
   }
   if (state().capabilities.login) settings.launchAtLogin = app.getLoginItemSettings().openAtLogin;
   else settings.launchAtLogin = false;
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    ...(process.platform === 'darwin' ? [{ label: 'Miso', submenu: [{ role: 'about' }, { label: 'Companion controls', click: showPanel }, { type: 'separator' }, { role: 'quit' }] }] : []),
-    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
-  ]));
+  // Retire the old size/click-through preferences along with the dashboard.
+  settings.size = 1;
+  settings.clickThrough = false;
+  const background = process.argv.includes('--background') || (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin);
+  if (!background) settings.hidden = true;
+  Menu.setApplicationMenu(process.platform === 'darwin' ? Menu.buildFromTemplate([
+    { label: 'Miso', submenu: [{ role: 'about' }, { type: 'separator' }, { role: 'quit' }] },
+  ]) : null);
   registerIPC(); createPet(); makeTray();
-  const registered = globalShortcut.register('CommandOrControl+Shift+M', () => { perform('recall'); showPanel(); });
+  const registered = globalShortcut.register('CommandOrControl+Shift+M', () => perform('recall'));
   if (!registered) notice = 'The recall shortcut is already in use. You can always bring Miso back from the tray menu.';
   powerMonitor.on('suspend', () => { paused = true; });
   powerMonitor.on('resume', () => { paused = false; lastTick = Date.now(); relocate(); });
   screen.on('display-removed', relocate);
   screen.on('display-metrics-changed', relocate);
   loop = setInterval(frame, 33);
-  const background = process.argv.includes('--background') || (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin);
   if (settings.firstRun || !background) showPanel();
   settings.firstRun = false; queueSave();
   if (SMOKE) {
-    try { await require('../scripts/desktop-check.cjs')({ app, getPet: () => pet, getPanel: () => panel, getPosition: () => position, hitTest: onVisiblePixel, state, perform, updateSettings, showPanel, persist }); app.exit(0); }
+    try { await require('../scripts/desktop-check.cjs')({ app, getPet: () => pet, getPanel: () => panel, getPosition: () => position, hitTest: onVisiblePixel, state, perform, updateSettings, showPanel, menuItems, persist }); app.exit(0); }
     catch (error) { console.error(error); app.exit(1); }
   }
 }).catch((error) => { console.error(error); app.exit(1); });

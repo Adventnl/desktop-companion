@@ -1,19 +1,12 @@
 # Validation and build status
 
-Verified in the Linux cloud development machine:
+Latest local validation: macOS, 19 October 2026.
 
-- Clean, lockfile-based dependency installation (`npm ci`).
-- JavaScript syntax checks and all 12 unit tests for preferences, movement, monitor bounds, and pose selection.
-- Real Electron desktop smoke test: transparent captures, always-on-top configuration, sandboxed renderers, control panel actions, pet pointer events, wardrobe, size, speed, hiding/showing, click-through recovery, actual native window movement, reduced motion, per-pixel hit testing, and settings restored after a full process restart.
-- Native X11 mouse click and drag on the final packaged application, with Xvfb and a window manager: clicking reacts; dragging moves the companion by the expected displacement.
-- Packaged Linux application startup: both windows load from `app.asar`, with the preload bridge and all images present.
-- Cross-built Windows portable executables for x64, ARM64, and a combined executable. These are unsigned development builds and have not been run on Windows here.
-- Cross-built Intel and Apple silicon Mac application ZIPs. These are unsigned development builds and have not been run on macOS here.
+- JavaScript syntax checks and all 12 unit tests pass.
+- Real Electron desktop smoke test passes across a complete restart: the launcher has one button, opening shows the pet and closes the launcher, skins persist through petting/play/sleep/wake, clicking never resizes the window, walking faces travel direction, Sit still stops movement, alpha hit testing works, and saved skin/roaming choices restore.
+- All 16 regenerated sprites load, share a 320 × 320 canvas, and have transparent borders. The walking source faces right. Original assets remain for provenance but are not used by the pet renderer.
+- Native screenshots `test-results/launcher.png` and `test-results/companion.png` were inspected. Smooth interpolation replaces pixelated rendering; the dashboard and wardrobe are removed.
+- The Impeccable mechanical detector reports no findings on the changed renderer files.
+- `npm run pack -- --publish never` succeeds for the local Apple silicon Mac. The rebuilt app is `dist/mac-arm64/Miso.app`.
 
-Build artifacts are generated in ignored `dist/`, not checked into Git. The screenshot from the desktop test is in `test-results/companion-controls.png`. The release workflow is configured but has not been run from this cloud checkout.
-
-The regular Windows NSIS installer cross-build encountered a Linux Wine runtime failure while generating its uninstaller. Incomplete installer files were removed. The app packages and portable build completed; the standard installer should be built and tested on the configured native Windows CI runner. Mac DMG creation, Developer ID signing, and notarization also require the native Mac runner.
-
-Linux tests use Xvfb. In this restricted container, Chromium’s privileged sandbox helper cannot be installed, so the test runner is launched with the explicit `MISO_TEST_NO_SANDBOX=1` container-only override. Normal application startup and platform builds do not disable the sandbox. A running window manager is necessary for realistic X11 stacking and native mouse interaction checks.
-
-Before public release, complete [the native installation and signing checklist](RELEASING.md). Platform acceptance testing, signing/notarization, touchscreen hardware, and true multi-monitor macOS/Windows behavior remain unverified in this Linux machine.
+Build artifacts and test screenshots are ignored by Git. Windows native behavior, true multi-monitor behavior, signing/notarization, touchscreen hardware, and full installer acceptance still require the [native release checklist](RELEASING.md). Earlier Linux cross-builds are historical and do not validate these changes on Windows.

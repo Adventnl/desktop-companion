@@ -4,80 +4,15 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Miso · A little company</title>
+  <title>Miso</title>
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-  <aside class="sidebar">
-    <a class="brand" href="#home" aria-label="Miso home"><span class="brand-icon">m.</span><span>miso<span class="brand-dot">✳</span></span></a>
-    <div class="eyebrow sidebar-label">YOUR DESKTOP, A LITTLE WARMER</div>
-    <nav aria-label="Companion controls">
-      <button class="nav-item active" data-tab="home" aria-current="page"><span aria-hidden="true">⌂</span> My companion</button>
-      <button class="nav-item" data-tab="wardrobe"><span aria-hidden="true">♧</span> Dress up <span class="tiny-tag">4</span></button>
-      <button class="nav-item" data-tab="settings"><span aria-hidden="true">⚙</span> Preferences</button>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="little-orbit"><img src="../../assets/cat/idle.png" alt="" draggable="false"></div>
-      <p>A little ghost.<br>A good little friend.</p>
-      <div class="sidebar-version">MISO <span id="version">1.0.0</span> <span class="dot">·</span> MADE FOR YOUR DESKTOP</div>
-    </div>
-  </aside>
-
   <main>
-    <header class="page-header">
-      <div><div class="eyebrow">A LITTLE COMPANY</div><h1 id="page-title">Meet your new shadow.</h1></div>
-      <button id="visibility" class="status-pill" aria-label="Hide Miso"><span class="status-dot"></span><span id="visibility-label">On your desktop</span></button>
-    </header>
-    <div id="notice" class="notice" role="status" hidden></div>
-
-    <section id="home" class="tab-panel" aria-label="My companion">
-      <div class="habitat" id="habitat">
-        <div class="scene-meta"><span class="live-dot"></span><span id="scene-status">HAPPILY HAUNTING</span><span class="scene-number">NO. 001</span></div>
-        <div class="scene-copy"><h2>A small spirit.<br>A softer day.</h2><p>No tasks. No rush.<br>Just happy to be here.</p></div>
-        <span class="spark spark-one" aria-hidden="true">✧</span><span class="spark spark-two" aria-hidden="true">+</span><span class="spark spark-three" aria-hidden="true">✦</span>
-        <div class="moon" aria-hidden="true"></div>
-        <div class="hill hill-back" aria-hidden="true"></div><div class="hill hill-front" aria-hidden="true"></div>
-        <button id="preview-pet" class="preview-pet" aria-label="Give Miso a little love"><img id="preview-sprite" src="../../assets/cat/float.png" alt="Miso, a white pixel ghost cat" draggable="false"></button>
-        <span id="preview-message" class="preview-message" role="status">A friendly little haunting.</span>
-        <div class="scene-footer"><span>MISO THE GHOST CAT</span><span>YOUR SPACE. OUR LITTLE WORLD. ↗</span></div>
-      </div>
-
-      <div class="section-title"><h2>A moment together</h2><span>Little things, big feelings.</span></div>
-      <div class="action-grid">
-        <button class="action-card" id="pet-action"><span class="action-icon pink">♡</span><span><strong>A little love</strong><small>Give Miso a gentle pet</small></span><span class="action-arrow">↗</span></button>
-        <button class="action-card" id="play-action"><span class="action-icon blue">◉</span><span><strong>Play time</strong><small>Bring out the yarn ball</small></span><span class="action-arrow">↗</span></button>
-        <button class="action-card" id="sleep-action"><span class="action-icon lilac">☾</span><span><strong id="sleep-label">Take a nap</strong><small id="sleep-description">Dream a little dream</small></span><span class="action-arrow">↗</span></button>
-      </div>
-
-      <div class="wander-row"><span class="wander-icon" aria-hidden="true">〰</span><div><strong>Room to roam</strong><p>Let Miso wander gently across your screens.</p></div><label class="switch"><input type="checkbox" id="roaming" aria-label="Let Miso roam"><span></span></label></div>
-      <div class="tip"><span aria-hidden="true">✳</span><p>Drag Miso anywhere. Right-click for a quick hello.<br><span>Closing this window keeps your companion by your side.</span></p><button id="recall" class="text-button">Bring Miso here ↗</button></div>
-    </section>
-
-    <section id="wardrobe" class="tab-panel" aria-label="Dress up" hidden>
-      <div class="section-intro"><h2>A little change of spirit.</h2><p>Same little friend. A whole new mood.</p></div>
-      <div class="outfit-grid" role="group" aria-label="Choose Miso’s outfit">
-        <button class="outfit-card selected" data-outfit="none" aria-pressed="true"><span class="outfit-scene mint"><img src="../../assets/cat/idle.png" alt="Miso without accessories"></span><span class="outfit-caption"><strong>Just Miso</strong><span class="outfit-check">✓</span></span><small>Perfectly, simply you.</small></button>
-        <button class="outfit-card" data-outfit="hat" aria-pressed="false"><span class="outfit-scene lavender"><img src="../../assets/cat/hat.png" alt="Miso in a purple witch hat"></span><span class="outfit-caption"><strong>A little magic</strong><span class="outfit-check">✓</span></span><small>For everyday enchantments.</small></button>
-        <button class="outfit-card" data-outfit="pumpkin" aria-pressed="false"><span class="outfit-scene peach"><img src="../../assets/cat/pumpkin.png" alt="Miso wearing a pumpkin"></span><span class="outfit-caption"><strong>Pumpkin season</strong><span class="outfit-check">✓</span></span><small>Cozy is a state of mind.</small></button>
-        <button class="outfit-card" data-outfit="box" aria-pressed="false"><span class="outfit-scene sand"><img src="../../assets/cat/box.png" alt="Miso sitting in a cardboard box"></span><span class="outfit-caption"><strong>Special delivery</strong><span class="outfit-check">✓</span></span><small>If it fits, Miso sits.</small></button>
-      </div>
-      <p class="wardrobe-note">Outfits return after play time. Even ghosts need a nap without a hat.</p>
-    </section>
-
-    <section id="settings" class="tab-panel" aria-label="Preferences" hidden>
-      <div class="section-intro"><h2>Make yourself at home.</h2><p>A companion that fits your rhythm.</p></div>
-      <div class="settings-list">
-        <div class="setting-row"><div><strong>A little or a lot?</strong><p>Choose Miso’s size on your desktop.</p></div><div class="segments" role="group" aria-label="Companion size"><button data-size="0.75" aria-pressed="false">Small</button><button data-size="1" aria-pressed="true">Medium</button><button data-size="1.35" aria-pressed="false">Large</button></div></div>
-        <div class="setting-row"><div><strong>The pace of the day</strong><p>How quickly your little friend wanders.</p></div><select id="speed" aria-label="Roaming speed"><option value="gentle">Easy does it</option><option value="normal">A little curious</option><option value="lively">Places to be</option></select></div>
-        <div class="setting-row"><div><strong>Quiet company</strong><p>Keep Miso still, with no automatic movement.</p></div><label class="switch"><input id="reduced-motion" type="checkbox" aria-label="Reduce motion"><span></span></label></div>
-        <div class="setting-row"><div><strong>Out of your way</strong><p>Let all clicks pass through Miso. Use the tray to turn off.</p></div><label class="switch"><input id="click-through" type="checkbox" aria-label="Click through Miso"><span></span></label></div>
-        <div class="setting-row"><div><strong>A familiar face at login</strong><p id="login-description">Start Miso when you sign in to your computer.</p></div><label class="switch"><input id="launch-login" type="checkbox" aria-label="Launch Miso at login"><span></span></label></div>
-      </div>
-      <div class="rescue-card"><span>✳</span><div><strong>Never too far away.</strong><p>Find Miso in your menu bar or system tray.<br>Or press <kbd id="shortcut">Ctrl Shift M</kbd> to bring Miso back.</p></div><button class="text-button" id="next-display">Next screen ↗</button></div>
-      <button class="quit-button" id="quit">Quit Miso</button>
-    </section>
-
-    <footer class="page-footer"><span><span class="footer-dot"></span> A small presence. A little more joy.</span><button id="close-panel">Back to my day <span>↗</span></button></footer>
+    <img src="../../assets/cat/hd/none-idle.png" alt="Miso the ghost cat" width="108" height="108" draggable="false">
+    <button id="open-miso">Open Miso</button>
+    <p>Right-click Miso for skins and actions.</p>
+    <p id="notice" role="status" hidden></p>
   </main>
   <script src="panel.js"></script>
 </body>

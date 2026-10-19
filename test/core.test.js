@@ -46,17 +46,21 @@ test('motion arrives without overshooting or dividing by zero', () => {
   assert.deepEqual(stepTowards({ x: 0, y: 0 }, { x: 1, y: 0 }, 60, .1), { x: 1, y: 0, arrived: true });
   assert.deepEqual(stepTowards({ x: 3, y: 4 }, { x: 3, y: 4 }, 60, .1), { x: 3, y: 4, arrived: true });
 });
-test('sleep takes priority over reactions, movement, and costumes', () => {
-  assert.equal(choosePose({ ...DEFAULTS, sleeping: true, outfit: 'hat' }, 'play', true, 0), 'sleep');
+test('sleep takes priority over reactions and movement while preserving the skin', () => {
+  assert.equal(choosePose({ ...DEFAULTS, sleeping: true, outfit: 'hat' }, 'play', true, 0), 'hat-sleep');
 });
-test('a costume returns after a temporary reaction', () => {
-  const settings = { ...DEFAULTS, outfit: 'pumpkin' };
-  assert.equal(choosePose(settings, 'interact', true, 0), 'interact');
-  assert.equal(choosePose(settings, null, true, 0), 'pumpkin');
+test('petting, playing, walking, and napping never remove the selected skin', () => {
+  for (const outfit of ['none', 'hat', 'pumpkin', 'box']) {
+    const settings = { ...DEFAULTS, outfit };
+    assert.equal(choosePose(settings, 'interact', true, 0), `${outfit}-idle`);
+    assert.equal(choosePose(settings, 'play', false, 0), `${outfit}-idle`);
+    assert.equal(choosePose(settings, null, true, 0), `${outfit}-walk_1`);
+    assert.equal(choosePose({ ...settings, sleeping: true }, null, false, 0), `${outfit}-sleep`);
+  }
 });
-test('walking alternates supplied frames and stationary modes have distinct poses', () => {
-  assert.equal(choosePose(DEFAULTS, null, true, 0), 'walk_1');
-  assert.equal(choosePose(DEFAULTS, null, true, 1), 'walk_2');
-  assert.equal(choosePose(DEFAULTS, null, false, 0), 'float');
-  assert.equal(choosePose({ ...DEFAULTS, roaming: false }, null, false, 0), 'idle');
+test('walking alternates frames; pausing always settles in the same stable idle', () => {
+  assert.equal(choosePose(DEFAULTS, null, true, 0), 'none-walk_1');
+  assert.equal(choosePose(DEFAULTS, null, true, 1), 'none-walk_2');
+  assert.equal(choosePose(DEFAULTS, null, false, 0), 'none-idle');
+  assert.equal(choosePose({ ...DEFAULTS, roaming: false }, null, false, 0), 'none-idle');
 });

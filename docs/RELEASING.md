@@ -38,12 +38,12 @@ Do not treat an unsigned artifact as signed or publish a Mac app if notarization
 
 On a clean Windows PC and a Mac, install the matching architecture and verify:
 
-1. The installer completes, the application opens, and the cat has a transparent background above ordinary applications.
-2. Click/tap reacts; drag moves; double-click opens controls; transparent areas let desktop clicks through. The tray/menu bar remains accessible after closing controls.
-3. All four outfits, petting, play, sleep/wake, size, speed, visibility, and reduced motion work. Preferences persist after quitting and restarting.
-4. With click-through on and with the cat hidden, the tray and `Ctrl+Shift+M` / `⌘⇧M` can recover it. If another app owns the shortcut, the UI reports this and the tray still works.
+1. The installer completes and the single-button launcher opens. **Open Miso** closes the launcher and shows the transparent cat above ordinary applications.
+2. Click/tap reacts; drag moves; transparent areas let desktop clicks through. Double-clicking never opens the old dashboard. Right-click opens the actions menu and pauses wandering until it closes.
+3. Test all four skins through petting, play, sleep/wake, and walking. The skin stays selected, the body scale remains consistent, and walking faces the travel direction. **Sit still** stops roaming; **Wander around** resumes it. Skin and roaming choices persist after restarting.
+4. With the cat hidden, the tray and `Ctrl+Shift+M` / `⌘⇧M` can recover it. If another app owns the shortcut, the tray still works.
 5. Try multiple monitors, including negative coordinates, different scale factors, and unplugging a monitor. Try macOS Spaces and fullscreen apps. Document platform-specific overlay limitations.
-6. Enable launch at login in the installed app, sign out/in, verify it starts in the background, then disable it and verify it no longer starts.
+6. If migrating from a version with launch at login enabled, verify the existing background startup works. Confirm old size/click-through settings no longer make the cat change size or become inaccessible.
 7. Verify signatures, macOS notarization, and installer provenance. Uninstall and confirm the app and shortcuts are removed. Preferences are retained on Windows for reinstalls; they can be removed from the documented user data folder.
 
 The cloud machine cannot replace this native acceptance check. The automated smoke test exercises real Electron windows, UI actions, movement, transparency, and persistence, but does not simulate a complete desktop compositor or installer session.
