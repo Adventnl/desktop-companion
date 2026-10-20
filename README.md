@@ -8,9 +8,9 @@ Miso is a desktop companion for **Windows and macOS** built with Electron. Open 
 
 Get the latest downloads from **[GitHub Releases](https://github.com/Adventnl/desktop-companion/releases/latest)**. No source code, Node.js, or terminal needed.
 
-- **Windows ? download and run:** choose `Miso-?-Windows-Portable.exe`, which selects the right version for your PC. Smaller `?-x64.exe` and `?-arm64.exe` downloads are also available. Double-click the downloaded EXE and the cat appears. No installation needed.
-- **Windows ? install once:** choose `Miso-?-Windows-Setup.exe`. The one-click installer selects x64 or ARM64, installs for your user without administrator access, and launches the cat. Open the desktop shortcut on later visits. Uninstall from Windows Settings ? Apps.
-- **Mac:** choose `Miso-?-mac-arm64.dmg` for Apple silicon, or `?-x64.dmg` for Intel. Open the DMG, drag Miso into Applications, eject the disk image, then open Miso. A ZIP of the app is also available. To remove it, quit Miso and move the application to Trash.
+- **Windows, download and run:** choose `Miso-<version>-Windows-Portable.exe`, which selects the right version for your PC. Smaller `Portable-x64.exe` and `Portable-arm64.exe` downloads are also available. Double-click the downloaded EXE and the cat appears. No installation needed.
+- **Windows, install once:** choose `Miso-<version>-Windows-Setup.exe`. The one-click installer selects x64 or ARM64, installs for your user without administrator access, and launches the cat. Open the desktop shortcut on later visits. Uninstall from Windows Settings > Apps.
+- **Mac:** choose `Miso-<version>-mac-arm64.dmg` for Apple silicon, or `Miso-<version>-mac-x64.dmg` for Intel. Open the DMG, drag Miso into Applications, eject the disk image, then open Miso. A ZIP of the app is also available. To remove it, quit Miso and move the application to Trash.
 
 Current downloads are unsigned on Windows and ad-hoc signed on Mac. Windows may show an unknown-publisher prompt; macOS may block the app because it is not Developer ID signed and notarized. The release notes describe signing status. [Maintainer release instructions](docs/RELEASING.md).
 
