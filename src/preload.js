@@ -6,9 +6,8 @@ contextBridge.exposeInMainWorld('miso', Object.freeze({
   update: (patch) => ipcRenderer.invoke('settings:update', patch),
   action: (action) => ipcRenderer.invoke('pet:action', action),
   drag: (phase) => ipcRenderer.send('pet:drag', phase),
+  dragFrame: () => ipcRenderer.invoke('pet:drag-frame'),
   menu: () => ipcRenderer.send('pet:menu'),
-  panel: () => ipcRenderer.send('panel:open'),
-  closePanel: () => ipcRenderer.send('panel:close'),
   onState: (callback) => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on('state', listener);

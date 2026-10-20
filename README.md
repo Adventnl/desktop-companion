@@ -2,16 +2,17 @@
 
 A little ghost. A good little friend.
 
-Miso is a desktop companion for **Windows and macOS** built with Electron. Open the app, click **Open Miso**, and the ghost cat appears on your desktop. It wanders, reacts to pets, plays, and naps. Everything runs locally, with no account, API key, or internet connection needed after installation.
+Miso is a desktop companion for **Windows and macOS** built with Electron. Open the app and the ghost cat appears immediately on your desktop. There is no launcher or startup screen. It wanders, reacts to pets, plays, and naps. Everything runs locally, with no account, API key, or internet connection needed after installation.
 
 ## Install
 
-Download the installer for your computer from the artifacts of a successful **Test and build desktop apps** run in this repository’s GitHub Actions tab. Unzip the artifact first.
+Get the latest downloads from **[GitHub Releases](https://github.com/Adventnl/desktop-companion/releases/latest)**. No source code, Node.js, or terminal needed.
 
-- **Windows:** run `Miso-…-win.exe`. The combined installer selects x64 or ARM64 for your PC, installs for your user without administrator access, and creates a desktop shortcut. Uninstall from Windows Settings → Apps.
-- **Mac:** open `Miso-…-mac-arm64.dmg` for Apple silicon, or `…-x64.dmg` for Intel. Drag Miso into Applications, eject the disk image, then open Miso from Applications. To remove it, quit Miso and move the application to Trash.
+- **Windows ? download and run:** choose `Miso-?-Windows-Portable.exe`, which selects the right version for your PC. Smaller `?-x64.exe` and `?-arm64.exe` downloads are also available. Double-click the downloaded EXE and the cat appears. No installation needed.
+- **Windows ? install once:** choose `Miso-?-Windows-Setup.exe`. The one-click installer selects x64 or ARM64, installs for your user without administrator access, and launches the cat. Open the desktop shortcut on later visits. Uninstall from Windows Settings ? Apps.
+- **Mac:** choose `Miso-?-mac-arm64.dmg` for Apple silicon, or `?-x64.dmg` for Intel. Open the DMG, drag Miso into Applications, eject the disk image, then open Miso. A ZIP of the app is also available. To remove it, quit Miso and move the application to Trash.
 
-Installers become available **after the workflow has run**; this checkout does not include a prebuilt Windows or Mac installer. Public distribution without operating-system trust prompts requires signing Windows builds and signing and notarizing Mac builds. See [release instructions](docs/RELEASING.md). Do not disable Gatekeeper or SmartScreen to install an untrusted binary.
+Current downloads are unsigned on Windows and ad-hoc signed on Mac. Windows may show an unknown-publisher prompt; macOS may block the app because it is not Developer ID signed and notarized. The release notes describe signing status. [Maintainer release instructions](docs/RELEASING.md).
 
 ## A little company
 
@@ -23,9 +24,9 @@ Installers become available **after the workflow has run**; this checkout does n
 | Click the tray / menu bar icon | Shows Miso |
 | `Ctrl+Shift+M` / `⌘⇧M` | Recalls Miso to your cursor |
 
-There is no dashboard or wardrobe window. The launcher has one button and closes when Miso opens. Right-click **Change skin** to choose Just Miso, Witch hat, Pumpkin, or Cardboard box. The chosen skin stays on while petting, playing, walking, and sleeping. All sprites share a fixed canvas and scale; clicking never resizes the pet. Choose **Quit Miso** from the right-click or tray menu to exit. Some Windows tray icons are under the overflow arrow.
+There is no dashboard or wardrobe window. Opening the app, including opening it again while it is running, shows the cat directly. Right-click **Change skin** to choose Just Miso, Witch hat, Pumpkin, or Cardboard box. The chosen skin stays on while petting, playing, walking, and sleeping. All sprites share a fixed canvas and scale; clicking never resizes the pet. Choose **Quit Miso** from the right-click or tray menu to exit. Some Windows tray icons are under the overflow arrow.
 
-Transparent parts of the pet window pass clicks through to the desktop. Hovering the cat pauses roaming so it is easy to catch. **Sit still** stops roaming until you choose **Wander around**. The cat also pauses while its right-click menu is open. Miso stays within display work areas, avoiding the dock and taskbar, and occasionally visits another connected screen. On monitor removal or wake from sleep, its position is brought back onto an available display.
+Transparent parts of the pet window pass clicks through to the desktop. Hovering the cat pauses roaming so it is easy to catch. Dragging follows display refresh frames independently of the behavior loop, samples the current system cursor, and never queues stale moves. **Sit still** stops roaming until you choose **Wander around**. The cat also pauses while its right-click menu is open. Miso stays within display work areas, avoiding the dock and taskbar, and occasionally visits another connected screen. On monitor removal or wake from sleep, its position is brought back onto an available display.
 
 The overlay sits above normal applications. Operating-system security prompts, the lock screen, some exclusive fullscreen games, and certain fullscreen apps can appear above it. No Accessibility, screen recording, or administrator permissions are needed for normal features. Touch works through ordinary pointer events on supported touch displays; macOS normally uses a mouse or trackpad.
 
@@ -63,7 +64,7 @@ In a cloud machine with a read-only home directory, use writable `XDG_CACHE_HOME
 - `src/main.js` owns native windows, the tray, settings, per-pixel mouse pass-through, multi-display movement, and IPC validation.
 - `src/core.js` contains pure movement, settings, and sprite-selection rules.
 - `src/preload.js` exposes a small API to sandboxed, isolated renderers. Node integration is disabled and pages enforce a restrictive content security policy.
-- `src/renderer/` contains the transparent companion and single-button launcher. No remote content, analytics, or external fonts are loaded.
+- `src/renderer/` contains the transparent companion. No remote content, analytics, or external fonts are loaded.
 - `assets/cat/hd/` contains the regenerated smooth artwork: 16 transparent, consistently aligned 320 × 320 frames for four skins and four poses. Every walking sprite faces right in the source; the renderer mirrors it for leftward travel. [Generation prompt and provenance](assets/cat/hd/GENERATION.md) are included. `scripts/prepare-sprites.cjs` mechanically slices the source sheet without redrawing or enlarging it.
 - `assets/cat/` retains the original supplied PNGs for provenance. The app uses the regenerated set with smooth interpolation rather than enlarging the old pixel art.
 
@@ -71,4 +72,4 @@ Preferences are saved atomically in `settings.json` under Electron’s per-user 
 
 ## Verification status
 
-The configured CI workflow will run the Node tests and Electron desktop smoke test on both native platforms. A Linux cloud smoke test verifies the shared implementation and transparent window captures; it cannot establish macOS Spaces behavior, Windows touch hardware, native installer behavior, signing, or notarization. Perform the native checklist in [RELEASING.md](docs/RELEASING.md) before distributing a release.
+The CI workflow runs the Node tests and Electron desktop smoke test on native Windows and macOS runners. Version tags automatically publish installers, portable apps, Mac downloads, and SHA-256 checksums to GitHub Releases after both builds pass. A Linux cloud smoke test verifies the shared implementation and transparent window captures; it cannot establish macOS Spaces behavior, Windows touch hardware, native installer behavior, signing, or notarization. Perform the native checklist in [RELEASING.md](docs/RELEASING.md) before distributing a release.

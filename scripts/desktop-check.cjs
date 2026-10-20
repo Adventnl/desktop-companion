@@ -12,18 +12,20 @@ module.exports = async function check(ctx) {
       await sleep(50);
     }
   }
-  const panel = ctx.getPanel(), pet = ctx.getPet();
+  const { BrowserWindow, screen } = require('electron');
+  const pet = ctx.getPet();
   const rendererErrors = [];
-  for (const win of [panel, pet]) {
+  for (const win of [pet]) {
     win.webContents.on('console-message', (event) => {
       if (event.level === 'error') rendererErrors.push(event.message);
     });
     win.webContents.on('render-process-gone', (_event, details) => rendererErrors.push('Renderer exited: ' + details.reason));
   }
-  const js = (code) => panel.webContents.executeJavaScript(code, true);
   const petJS = (code) => pet.webContents.executeJavaScript(code, true);
-  await until(() => js('!!document.getElementById("open-miso")'), 'launcher loaded');
   await until(() => petJS('document.getElementById("sprite").complete && document.getElementById("sprite").naturalWidth > 0'), 'cat loaded');
+  await until(() => pet.isVisible(), 'cat visible immediately');
+  assert.equal(BrowserWindow.getAllWindows().length, 1, 'Only the companion opens');
+  assert.equal(ctx.state().settings.hidden, false, 'Launching always shows the cat');
 
   if (process.env.MISO_TEST_RESTORE === '1') {
     assert.equal(ctx.state().settings.size, 1);
@@ -35,21 +37,15 @@ module.exports = async function check(ctx) {
     return;
   }
 
-  assert.equal(await js('document.querySelectorAll("button").length'), 1);
-  assert.equal(await js('document.querySelector("nav, aside, select") === null'), true);
-  assert.equal(pet.isVisible(), false, 'Miso waits for the Open button on a normal launch');
   assert.equal(pet.isAlwaysOnTop(), true);
   assert.equal(pet.isResizable(), false);
   assert.equal(await petJS('getComputedStyle(document.body).backgroundColor'), 'rgba(0, 0, 0, 0)');
   assert.equal((await pet.webContents.capturePage()).toBitmap()[3], 0);
   assert.equal(pet.webContents.getLastWebPreferences().contextIsolation, true);
   assert.equal(pet.webContents.getLastWebPreferences().nodeIntegration, false);
-  assert.equal(await js('typeof require'), 'undefined');
-  fs.writeFileSync(path.join(process.env.MISO_TEST_RESULTS, 'launcher.png'), (await panel.webContents.capturePage()).toPNG());
-  ctx.updateSettings({ hidden: true, roaming: false });
-  await js('document.getElementById("open-miso").click()');
-  await until(() => ctx.getPanel() === null && pet.isVisible(), 'one button opens cat and closes launcher');
-  console.log('PASS: Single-button launcher, transparent native pet, isolated renderers.');
+  assert.equal(await petJS('typeof require'), 'undefined');
+  ctx.updateSettings({ roaming: false });
+  console.log('PASS: Direct launch, one transparent native companion, isolated renderer.');
 
   const fixedSize = pet.getSize();
   const skins = ctx.menuItems().find((item) => item.label === 'Change skin').submenu;
@@ -103,6 +99,44 @@ module.exports = async function check(ctx) {
   assert.equal(ctx.hitTest({ x: p.x + 115, y: p.y + 140 }, 'pumpkin-idle'), true);
   console.log('PASS: Native roaming faces its travel direction; Sit still stops it; alpha hit testing works.');
 
+  // Exercise the real renderer RAF -> preload -> main -> native window path.
+  // Substitute only the OS cursor source so CI needs no global input permissions.
+  const getCursor = screen.getCursorScreenPoint;
+  const area = screen.getDisplayMatching(pet.getBounds()).workArea;
+  const dragStart = { x: area.x + 20, y: area.y + 20 };
+  pet.setPosition(dragStart.x, dragStart.y);
+  let cursor = { x: dragStart.x + 115, y: dragStart.y + 140 };
+  screen.getCursorScreenPoint = () => cursor;
+  const originalSetPosition = pet.setPosition.bind(pet);
+  let moves = 0;
+  pet.setPosition = (...args) => { moves++; return originalSetPosition(...args); };
+  try {
+    pet.webContents.sendInputEvent({ type: 'mouseDown', x: 115, y: 140, button: 'left', clickCount: 1 });
+    await sleep(100);
+    const stoppedMoves = moves;
+    await sleep(100);
+    assert.equal(moves, stoppedMoves, 'Stationary cursor does not repeatedly move the window');
+    const began = Date.now();
+    const timer = setInterval(() => { cursor = { x: cursor.x + 2, y: cursor.y }; }, 4);
+    try { await sleep(600); } finally { clearInterval(timer); }
+    const elapsed = Date.now() - began;
+    const rate = (moves - stoppedMoves) * 1000 / elapsed;
+    assert.ok(moves > stoppedMoves, 'Display frames move the native companion while held');
+    cursor = { x: dragStart.x + 115 + 75, y: dragStart.y + 140 + 45 };
+    pet.webContents.sendInputEvent({ type: 'mouseUp', x: 115, y: 140, button: 'left', clickCount: 1 });
+    await until(() => ctx.state().message === 'A new little corner.', 'drag release');
+    assert.deepEqual(pet.getPosition(), [dragStart.x + 75, dragStart.y + 45], 'Release uses the latest cursor, not a stale frame');
+    const released = pet.getPosition();
+    cursor = { x: cursor.x + 100, y: cursor.y + 100 };
+    await sleep(100);
+    assert.deepEqual(pet.getPosition(), released, 'No queued movement after release');
+    console.log(`PASS: Display-synced drag (${rate.toFixed(1)} native moves/sec), stationary deduplication, final release position.`);
+  } finally {
+    screen.getCursorScreenPoint = getCursor;
+    pet.setPosition = originalSetPosition;
+    ctx.perform('recall');
+  }
+
   ctx.updateSettings({ outfit: 'hat', roaming: false });
   ctx.persist();
   await until(() => petJS('document.getElementById("sprite").src.endsWith("hat-idle.png") && document.getElementById("sprite").complete'), 'hat loaded');
@@ -121,9 +155,9 @@ module.exports = async function check(ctx) {
     }
   }
   ctx.updateSettings({ outfit: 'hat', sleeping: false, roaming: false });
+  // Deliberately save hidden to cover migration/relaunch from an older install.
+  ctx.updateSettings({ hidden: true });
   ctx.persist();
-  ctx.showPanel();
-  await until(() => ctx.getPanel().isVisible(), 'launcher reopened');
   assert.deepEqual(rendererErrors, []);
   console.log('PASS: All 16 sprites load with clean transparent borders, consistent frames, saved skin.');
 };

@@ -1,6 +1,6 @@
 {
   "name": "miso-desktop-companion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A little ghost cat for your desktop. Floats, plays, and keeps you company.",
   "main": "src/main.js",
   "author": "Adventnl",
@@ -15,7 +15,7 @@
     "dist:win": "electron-builder --win",
     "dist:portable": "electron-builder --win portable --x64 --arm64",
     "dist:mac": "electron-builder --mac",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/core.js && node --check src/renderer/panel.js && node --check src/renderer/pet.js"
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/core.js && node --check src/renderer/pet.js"
   },
   "devDependencies": {
     "electron": "44.9.0",
@@ -38,8 +38,8 @@
       "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": { "title": "Miso", "contents": [{ "x": 140, "y": 150 }, { "x": 410, "y": 150, "type": "link", "path": "/Applications" }] },
-    "win": { "icon": "build/icon.ico", "target": [{ "target": "nsis", "arch": ["x64", "arm64"] }] },
-    "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "shortcutName": "Miso", "deleteAppDataOnUninstall": false },
+    "win": { "icon": "build/icon.ico", "target": [{ "target": "nsis", "arch": ["x64", "arm64"] }, { "target": "portable", "arch": ["x64", "arm64"] }] },
+    "nsis": { "artifactName": "Miso-${version}-Windows-Setup.${ext}", "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "shortcutName": "Miso", "deleteAppDataOnUninstall": false, "runAfterFinish": true },
     "portable": { "artifactName": "Miso-${version}-Windows-Portable-${arch}.${ext}", "requestExecutionLevel": "user" },
     "linux": { "icon": "build/icon.png", "target": "dir", "category": "Game" }
   }

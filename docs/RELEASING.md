@@ -2,9 +2,15 @@
 
 ## Make the installers
 
-Run the **Test and build desktop apps** GitHub Actions workflow after pushing the project. It tests and builds on native Windows and macOS runners, producing a combined Windows x64/ARM64 per-user NSIS installer (`.exe`), and separate Apple silicon and Intel disk images (`.dmg`) and app archives (`.zip`).
+The **Test and build desktop apps** workflow tests and builds on native Windows and macOS runners. It produces:
 
-The workflow uploads build artifacts; it does not create or publish a GitHub release. Download and verify the artifacts, then attach the installers to a release when ready. Version filenames follow `package.json`.
+- A combined Windows x64/ARM64 one-click installer (`Windows-Setup.exe`), which launches Miso after installation.
+- A combined Windows portable EXE, plus smaller x64 and ARM64 versions, which open the cat without installation.
+- Apple silicon and Intel disk images (`.dmg`) and app archives (`.zip`).
+
+Push a version tag matching `package.json` (for example `v1.0.1`) to publish a release automatically. Bump the version and lockfile before the next release. Both platform jobs must pass before the release job runs. It verifies the expected downloads, generates `SHA256SUMS.txt`, uploads to a draft release, and only then publishes it as the latest release. The workflow refuses to overwrite an already published release. A failed unpublished draft can be retried by rerunning the workflow.
+
+Ordinary pushes, pull requests, and manual workflow runs only upload Actions artifacts. End users download from [Releases](https://github.com/Adventnl/desktop-companion/releases/latest), without visiting Actions or the source code. Release notes distinguish the portable EXEs, installer, and Mac architectures and state whether signing credentials were available.
 
 Local builds require Node 24+ and `npm ci`. Use `npm run dist:win -- --publish never` on Windows or `npm run dist:mac -- --publish never` on macOS. Apple’s tooling and notarization require macOS. Use native runners to avoid Wine and cross-compilation limitations.
 
@@ -38,8 +44,8 @@ Do not treat an unsigned artifact as signed or publish a Mac app if notarization
 
 On a clean Windows PC and a Mac, install the matching architecture and verify:
 
-1. The installer completes and the single-button launcher opens. **Open Miso** closes the launcher and shows the transparent cat above ordinary applications.
-2. Click/tap reacts; drag moves; transparent areas let desktop clicks through. Double-clicking never opens the old dashboard. Right-click opens the actions menu and pauses wandering until it closes.
+1. The portable EXE opens the transparent cat immediately above ordinary applications. The Windows installer completes and starts the cat automatically. Opening a shortcut, the Mac app, or a second copy also shows the cat directly; no launcher opens. Restart after hiding Miso and confirm it is visible again.
+2. Click/tap reacts; holding and dragging tracks the cursor smoothly, stops exactly on release, and does not generate a click reaction when cancelled; transparent areas let desktop clicks through. Double-clicking never opens the old dashboard. Right-click opens the actions menu and pauses wandering until it closes.
 3. Test all four skins through petting, play, sleep/wake, and walking. The skin stays selected, the body scale remains consistent, and walking faces the travel direction. **Sit still** stops roaming; **Wander around** resumes it. Skin and roaming choices persist after restarting.
 4. With the cat hidden, the tray and `Ctrl+Shift+M` / `⌘⇧M` can recover it. If another app owns the shortcut, the tray still works.
 5. Try multiple monitors, including negative coordinates, different scale factors, and unplugging a monitor. Try macOS Spaces and fullscreen apps. Document platform-specific overlay limitations.

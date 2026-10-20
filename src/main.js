@@ -13,7 +13,7 @@ app.setName('Miso');
 const ownsLock = app.requestSingleInstanceLock();
 if (!ownsLock) app.quit();
 
-let pet, panel, tray, settings = { ...DEFAULTS }, notice = '';
+let pet, tray, settings = { ...DEFAULTS }, notice = '';
 let target = null, position, activity = null, activityUntil = 0, message = '', nextWander = 0;
 let dragging = null, hovered = false, moving = false, paused = false, facing = 1;
 let lastPose, lastMessage, lastFacing, tick = 0, lastTick = Date.now(), saveTimer, loop;
@@ -48,7 +48,7 @@ function state() {
 }
 function broadcast() {
   const data = state();
-  for (const window of [pet, panel]) if (alive(window)) window.webContents.send('state', data);
+  if (alive(pet)) pet.webContents.send('state', data);
 }
 
 function secureWindow(window, page) {
@@ -90,19 +90,6 @@ function createPet() {
   });
 }
 
-function showPanel() {
-  if (alive(panel)) { panel.show(); panel.focus(); return; }
-  panel = new BrowserWindow({
-    width: 300, height: 294, resizable: false, maximizable: false,
-    title: 'Miso', backgroundColor: '#f7f7f2',
-    autoHideMenuBar: true, show: false, icon: path.join(ROOT, 'assets/miso.png'),
-    webPreferences: webPreferences(),
-  });
-  secureWindow(panel, 'panel.html');
-  panel.once('ready-to-show', () => { panel.show(); });
-  panel.on('closed', () => { panel = null; });
-}
-
 function makeTray() {
   const icon = process.platform === 'darwin'
     ? nativeImage.createFromPath(path.join(ROOT, 'assets/trayTemplate.png'))
@@ -138,6 +125,7 @@ function updateSettings(patch) {
     if (Object.hasOwn(patch, key)) safe[key] = patch[key];
   }
   const next = sanitizeSettings({ ...settings, ...safe });
+  if (dragging) endDrag(false);
   if (next.launchAtLogin !== settings.launchAtLogin) {
     if (!state().capabilities.login) {
       next.launchAtLogin = false;
@@ -230,15 +218,12 @@ function frame() {
   if (activity && now >= activityUntil) { activity = null; message = ''; }
   if (!settings.hidden) {
     const cursor = screen.getCursorScreenPoint();
-    hovered = !settings.clickThrough && onVisiblePixel(cursor, state().pose);
+    // Drag movement runs on display frames, independently of this behavior loop.
+    hovered = !!dragging || (!settings.clickThrough && onVisiblePixel(cursor, state().pose));
     const ignore = settings.clickThrough || (!hovered && !dragging);
     if (ignore !== ignoreMouse) { pet.setIgnoreMouseEvents(ignore, { forward: true }); ignoreMouse = ignore; }
     if (dragging) {
-      if (now - dragging.started > 30000) endDrag();
-      else {
-        position = clampPosition({ x: cursor.x - dragging.offset.x, y: cursor.y - dragging.offset.y }, screen.getDisplayNearestPoint(cursor).workArea, petSize(settings.size));
-        pet.setPosition(position.x, position.y);
-      }
+      if (now - dragging.lastFrame > 2000) endDrag(false);
     } else if (settings.roaming && !settings.sleeping && !settings.reducedMotion && !activity && !hovered) {
       if (!target && now >= nextWander) {
         const displays = screen.getAllDisplays();
@@ -262,14 +247,28 @@ function frame() {
   }
 }
 
-function endDrag() {
+function moveDrag() {
+  if (!dragging || !alive(pet) || paused) return false;
+  dragging.lastFrame = Date.now();
+  const cursor = screen.getCursorScreenPoint();
+  const next = clampPosition({ x: cursor.x - dragging.offset.x, y: cursor.y - dragging.offset.y }, screen.getDisplayNearestPoint(cursor).workArea, petSize(settings.size));
+  if (next.x !== position.x || next.y !== position.y) {
+    position = next;
+    pet.setPosition(position.x, position.y, false);
+  }
+  return true;
+}
+function endDrag(commit = true) {
   if (!dragging) return;
+  // Include mouse-up even if it arrived before the next display frame.
+  if (commit) moveDrag();
   const distance = Math.hypot(position.x - dragging.origin.x, position.y - dragging.origin.y);
   dragging = null;
-  if (distance < 5) perform('pet'); else { react('happy', 'A new little corner.'); queueSave(); }
+  if (!commit) queueSave();
+  else if (distance < 5) perform('pet'); else { react('happy', 'A new little corner.'); queueSave(); }
 }
 function validSender(event) {
-  return [pet, panel].some((window) => alive(window) && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame);
+  return alive(pet) && event.sender === pet.webContents && event.senderFrame === pet.webContents.mainFrame;
 }
 function registerIPC() {
   ipcMain.handle('state:get', (event) => validSender(event) ? state() : null);
@@ -277,33 +276,38 @@ function registerIPC() {
   ipcMain.handle('pet:action', (event, action) => validSender(event) ? perform(action) : null);
   ipcMain.on('pet:drag', (event, phase) => {
     if (!alive(pet) || event.sender !== pet.webContents || !validSender(event)) return;
-    if (phase === 'start' && !settings.clickThrough) {
+    if (phase === 'start' && !settings.clickThrough && !dragging && !paused && !settings.hidden) {
       const cursor = screen.getCursorScreenPoint();
-      dragging = { offset: { x: cursor.x - position.x, y: cursor.y - position.y }, origin: { ...position }, started: Date.now() };
+      const [x, y] = pet.getPosition();
+      position = { x, y };
+      dragging = { offset: { x: cursor.x - x, y: cursor.y - y }, origin: { ...position }, lastFrame: Date.now() };
+      pet.setIgnoreMouseEvents(false);
+      ignoreMouse = false;
       target = null; moving = false;
     } else if (phase === 'end') endDrag();
+    else if (phase === 'cancel') endDrag(false);
   });
+  ipcMain.handle('pet:drag-frame', (event) => validSender(event) && moveDrag());
   ipcMain.on('pet:menu', (event) => {
     if (!validSender(event)) return;
     // Native menus provide keyboard navigation and close on outside clicks.
     // Pause the cat for the entire menu interaction, including its skin submenu.
+    endDrag(false);
     paused = true; moving = false;
     Menu.buildFromTemplate(menuItems()).popup({ callback: () => { paused = false; lastTick = Date.now(); } });
   });
-  ipcMain.on('panel:open', (event) => { if (validSender(event)) showPanel(); });
-  ipcMain.on('panel:close', (event) => { if (validSender(event) && alive(panel)) panel.close(); });
 }
 
 function relocate() {
   if (!alive(pet)) return;
+  endDrag(false);
   target = null;
   position = clampPosition(position, screen.getDisplayNearestPoint(position).workArea, petSize(settings.size));
   pet.setPosition(position.x, position.y); queueSave();
 }
 
 function activate() {
-  if (alive(panel)) showPanel();
-  else if (alive(pet)) perform('open');
+  if (alive(pet)) perform('open');
 }
 app.on('second-instance', activate);
 app.on('activate', activate);
@@ -324,23 +328,23 @@ if (ownsLock) app.whenReady().then(async () => {
   // Retire the old size/click-through preferences along with the dashboard.
   settings.size = 1;
   settings.clickThrough = false;
-  const background = process.argv.includes('--background') || (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin);
-  if (!background) settings.hidden = true;
+  // Every launch opens the companion, including older installs saved as hidden.
+  settings.hidden = false;
+  if (process.platform === 'darwin') app.dock.hide();
   Menu.setApplicationMenu(process.platform === 'darwin' ? Menu.buildFromTemplate([
     { label: 'Miso', submenu: [{ role: 'about' }, { type: 'separator' }, { role: 'quit' }] },
   ]) : null);
   registerIPC(); createPet(); makeTray();
   const registered = globalShortcut.register('CommandOrControl+Shift+M', () => perform('recall'));
   if (!registered) notice = 'The recall shortcut is already in use. You can always bring Miso back from the tray menu.';
-  powerMonitor.on('suspend', () => { paused = true; });
+  powerMonitor.on('suspend', () => { endDrag(false); paused = true; });
   powerMonitor.on('resume', () => { paused = false; lastTick = Date.now(); relocate(); });
   screen.on('display-removed', relocate);
   screen.on('display-metrics-changed', relocate);
   loop = setInterval(frame, 33);
-  if (settings.firstRun || !background) showPanel();
   settings.firstRun = false; queueSave();
   if (SMOKE) {
-    try { await require('../scripts/desktop-check.cjs')({ app, getPet: () => pet, getPanel: () => panel, getPosition: () => position, hitTest: onVisiblePixel, state, perform, updateSettings, showPanel, menuItems, persist }); app.exit(0); }
+    try { await require('../scripts/desktop-check.cjs')({ app, getPet: () => pet, getPosition: () => position, hitTest: onVisiblePixel, state, perform, updateSettings, menuItems, persist }); app.exit(0); }
     catch (error) { console.error(error); app.exit(1); }
   }
 }).catch((error) => { console.error(error); app.exit(1); });

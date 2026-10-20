@@ -12,9 +12,12 @@ function run(restore) {
     const args = ['.', '--smoke-test'];
     // For isolated Linux containers without a usable Chromium sandbox only.
     if (process.env.MISO_TEST_NO_SANDBOX === '1') args.push('--no-sandbox');
+    const env = { ...process.env, MISO_TEST_DATA_DIR: directory, MISO_TEST_RESULTS: resultDir, MISO_TEST_RESTORE: restore ? '1' : '0' };
+    // Editor/agent hosts can set this for their own helpers; this is a GUI test.
+    delete env.ELECTRON_RUN_AS_NODE;
     const child = spawn(require('electron'), args, {
       stdio: 'inherit',
-      env: { ...process.env, MISO_TEST_DATA_DIR: directory, MISO_TEST_RESULTS: resultDir, MISO_TEST_RESTORE: restore ? '1' : '0' },
+      env,
     });
     const timeout = setTimeout(() => { child.kill(); reject(new Error('Desktop smoke test timed out')); }, 45000);
     child.on('error', (error) => { clearTimeout(timeout); reject(error); });

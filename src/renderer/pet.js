@@ -25,17 +25,39 @@ function render(state) {
 window.miso.onState(render);
 window.miso.getState().then(render);
 
+let dragPointer = null, dragFrame = null, framePending = false;
+function followPointer() {
+  if (dragPointer === null) return;
+  dragFrame = requestAnimationFrame(followPointer);
+  // Never queue stale moves if native window movement takes longer than a frame.
+  // Main samples the OS cursor to avoid coordinate drift across scaled displays.
+  if (framePending) return;
+  framePending = true;
+  window.miso.dragFrame().then((active) => {
+    if (!active) stopDrag('cancel');
+  }).catch(() => stopDrag('cancel')).finally(() => { framePending = false; });
+}
+function stopDrag(phase = 'end') {
+  if (dragPointer === null) return;
+  const pointer = dragPointer;
+  dragPointer = null;
+  cancelAnimationFrame(dragFrame);
+  if (cat.hasPointerCapture(pointer)) cat.releasePointerCapture(pointer);
+  window.miso.drag(phase);
+}
 cat.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || dragPointer !== null) return;
+  event.preventDefault();
+  dragPointer = event.pointerId;
   cat.setPointerCapture(event.pointerId);
   window.miso.drag('start');
+  dragFrame = requestAnimationFrame(followPointer);
 });
 cat.addEventListener('pointerup', (event) => {
-  if (event.button !== 0) return;
-  if (cat.hasPointerCapture(event.pointerId)) cat.releasePointerCapture(event.pointerId);
-  window.miso.drag('end');
+  if (event.button === 0 && event.pointerId === dragPointer) stopDrag();
 });
-cat.addEventListener('lostpointercapture', () => window.miso.drag('end'));
-cat.addEventListener('pointercancel', () => window.miso.drag('end'));
+cat.addEventListener('lostpointercapture', () => stopDrag('cancel'));
+cat.addEventListener('pointercancel', () => stopDrag('cancel'));
+window.addEventListener('pagehide', () => stopDrag('cancel'));
 cat.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.miso.action('pet'); } });
 document.addEventListener('contextmenu', (event) => { event.preventDefault(); window.miso.menu(); });
