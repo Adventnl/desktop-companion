@@ -93,7 +93,7 @@ function createPet() {
 function makeTray() {
   const icon = process.platform === 'darwin'
     ? nativeImage.createFromPath(path.join(ROOT, 'assets/trayTemplate.png'))
-    : nativeImage.createFromPath(path.join(ROOT, 'assets/cat/hd/none-idle.png')).resize({ width: 24, height: 24 });
+    : nativeImage.createFromPath(path.join(ROOT, 'assets/cat/pixel/none-idle.png')).resize({ width: 24, height: 24 });
   if (process.platform === 'darwin') icon.setTemplateImage(true);
   tray = new Tray(icon);
   tray.setToolTip('Miso · Your ghost cat companion');
@@ -197,7 +197,7 @@ function perform(action) {
 // Hit-test the original sprite alpha, so even holes inside the sprite let clicks through.
 function onVisiblePixel(cursor, pose) {
   if (!masks.has(pose)) {
-    const image = nativeImage.createFromPath(path.join(ROOT, 'assets', 'cat', 'hd', pose + '.png'));
+    const image = nativeImage.createFromPath(path.join(ROOT, 'assets', 'cat', 'pixel', pose + '.png'));
     masks.set(pose, { ...image.getSize(), data: image.toBitmap() });
   }
   const mask = masks.get(pose), scale = settings.size;

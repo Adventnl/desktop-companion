@@ -8,14 +8,14 @@ const sprites = [];
 for (const skin of ['none', 'hat', 'pumpkin', 'box']) {
   for (const pose of ['idle', 'walk_1', 'walk_2', 'sleep']) {
     const asset = new Image();
-    asset.src = `../../assets/cat/hd/${skin}-${pose}.png`;
+    asset.src = `../../assets/cat/pixel/${skin}-${pose}.png`;
     sprites.push(asset);
   }
 }
 
 function render(state) {
   if (!state) return;
-  if (state.pose !== currentPose) { sprite.src = `../../assets/cat/hd/${state.pose}.png`; currentPose = state.pose; }
+  if (state.pose !== currentPose) { sprite.src = `../../assets/cat/pixel/${state.pose}.png`; currentPose = state.pose; }
   sprite.style.transform = state.facing < 0 ? 'scaleX(-1)' : '';
   cat.dataset.activity = state.activity || '';
   cat.classList.toggle('reduced-motion', state.settings.reducedMotion);

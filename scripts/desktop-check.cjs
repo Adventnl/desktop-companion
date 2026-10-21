@@ -40,6 +40,7 @@ module.exports = async function check(ctx) {
   assert.equal(pet.isAlwaysOnTop(), true);
   assert.equal(pet.isResizable(), false);
   assert.equal(await petJS('getComputedStyle(document.body).backgroundColor'), 'rgba(0, 0, 0, 0)');
+  assert.equal(await petJS('getComputedStyle(document.getElementById("sprite")).imageRendering'), 'pixelated');
   assert.equal((await pet.webContents.capturePage()).toBitmap()[3], 0);
   assert.equal(pet.webContents.getLastWebPreferences().contextIsolation, true);
   assert.equal(pet.webContents.getLastWebPreferences().nodeIntegration, false);
@@ -145,12 +146,29 @@ module.exports = async function check(ctx) {
   for (const skin of ['none', 'hat', 'pumpkin', 'box']) {
     for (const pose of ['idle', 'walk_1', 'walk_2', 'sleep']) {
       ctx.updateSettings({ outfit: skin, sleeping: pose === 'sleep' });
-      // Verify all generated assets are valid fixed-size RGBA images, with a clear border.
-      const img = require('electron').nativeImage.createFromPath(path.join(__dirname, '../assets/cat/hd', `${skin}-${pose}.png`));
-      assert.deepEqual(img.getSize(), { width: 320, height: 320 });
+      // Verify all pixel assets are valid fixed-size RGBA images, with a clear border.
+      const img = require('electron').nativeImage.createFromPath(path.join(__dirname, '../assets/cat/pixel', `${skin}-${pose}.png`));
+      assert.deepEqual(img.getSize(), { width: 50, height: 50 });
+      await petJS(`(async () => {
+        const sprite = document.getElementById('sprite');
+        sprite.src = '../../assets/cat/pixel/${skin}-${pose}.png';
+        await sprite.decode();
+      })()`);
+      if (pose === 'idle' || pose === 'sleep') {
+        await sleep(50);
+        fs.writeFileSync(path.join(process.env.MISO_TEST_RESULTS, `${skin}-${pose}.png`), (await pet.webContents.capturePage()).toPNG());
+      }
       const data = img.toBitmap();
-      for (let i = 0; i < 320; i++) {
-        for (const offset of [i, 319 * 320 + i, i * 320, i * 320 + 319]) assert.equal(data[offset * 4 + 3], 0);
+      const colors = new Set();
+      for (let i = 0; i < 50 * 50; i++) {
+        const alpha = data[i * 4 + 3];
+        assert.ok(alpha === 0 || alpha === 255, 'No semitransparent edge fringes');
+        if (alpha) colors.add(data.subarray(i * 4, i * 4 + 3).toString('hex'));
+      }
+      assert.ok(colors.size <= 12, 'Sprites use a clean, limited palette');
+      if (skin === 'none') assert.ok(colors.size <= 4, 'Plain cats contain only ink, cream, shading and blush');
+      for (let i = 0; i < 50; i++) {
+        for (const offset of [i, 49 * 50 + i, i * 50, i * 50 + 49]) assert.equal(data[offset * 4 + 3], 0);
       }
     }
   }

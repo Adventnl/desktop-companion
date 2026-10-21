@@ -6,7 +6,7 @@ html, body { margin: 0; width: 100%; height: 100%; background: transparent; over
 #cat:active { cursor: grabbing; }
 #cat { touch-action: none; }
 #cat:focus-visible { outline: 2px dotted #658c7b; outline-offset: 3px; border-radius: 45%; }
-#sprite { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; pointer-events: none; }
+#sprite { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; image-rendering: pixelated; pointer-events: none; }
 #cat[data-activity="interact"] { animation: affection 650ms ease-out; }
 #cat[data-activity="play"] { animation: play 700ms ease-in-out 6; }
 #cat.reduced-motion { animation: none; }
