@@ -14,6 +14,17 @@ Get the latest downloads from **[GitHub Releases](https://github.com/Adventnl/de
 
 Current downloads are unsigned on Windows and ad-hoc signed on Mac. Windows may show an unknown-publisher prompt; macOS may block the app because it is not Developer ID signed and notarized. The release notes describe signing status. [Maintainer release instructions](docs/RELEASING.md).
 
+### Mac: “Apple could not verify Miso is free of malware”
+
+This is macOS Gatekeeper blocking an app whose developer identity and notarization it cannot verify. If you downloaded Miso from this project's [GitHub Releases](https://github.com/Adventnl/desktop-companion/releases/latest) and trust that copy:
+
+1. Drag Miso into **Applications** and try opening it once.
+2. Click **Done** in the warning.
+3. Open **System Settings → Privacy & Security**, scroll to **Security**, and click **Open Anyway** beside the message about Miso.
+4. Confirm **Open** and authenticate if prompted. Later launches can open normally.
+
+This creates an exception for Miso. See [Apple's instructions](https://support.apple.com/en-us/102445). Removing the warning for new downloads requires a new release signed with a Developer ID Application certificate and notarized by Apple.
+
 ## A little company
 
 | Do this | Miso does this |

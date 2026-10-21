@@ -36,6 +36,10 @@ spctl --assess --type execute --verbose=2 /Applications/Miso.app
 xcrun stapler validate /Applications/Miso.app
 ```
 
+If users see “Apple could not verify Miso is free of malware,” check that all five Mac secrets above were configured for that release. A successful build with ad-hoc signing does not pass Gatekeeper verification. Use a Developer ID Application certificate from an Apple Developer Program account; an ad-hoc or Mac App Store certificate is not a substitute. After configuring the secrets, publish a new version and complete the signature, Gatekeeper, and stapling checks above on the downloaded app. Existing downloads do not become signed or notarized when secrets are added.
+
+Until a signed and notarized release is available, the README and release notes explain Apple's **Privacy & Security → Open Anyway** exception for users who trust their download. [Apple's explanation and opening instructions](https://support.apple.com/en-us/102445).
+
 For Windows, add `WIN_CERTIFICATE` (base64 `.p12`) and `WIN_CERTIFICATE_PASSWORD`. The workflow passes them to electron-builder. Your certificate provider may require hardware-backed or cloud signing; configure electron-builder’s supported integration separately for that provider. A new signed Windows application can still receive SmartScreen reputation prompts.
 
 Do not treat an unsigned artifact as signed or publish a Mac app if notarization failed. No signing material or developer credentials are included with this project.

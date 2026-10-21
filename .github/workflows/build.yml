@@ -129,7 +129,15 @@ jobs:
             printf '\nWindows downloads are unsigned and may show an unknown-publisher/SmartScreen prompt.\n' >> ../release-notes.md
           fi
           if [ "$MAC_SIGNED" != "true" ] || [ "$MAC_NOTARIZED" != "true" ]; then
-            printf '\nMac downloads are not fully Developer ID signed and notarized; macOS may block opening them.\n' >> ../release-notes.md
+            cat >> ../release-notes.md <<'MAC_NOTES'
+
+          ### Mac opening warning
+          These Mac downloads are not fully Developer ID signed and notarized. macOS may show “Apple could not verify Miso is free of malware.”
+
+          If you trust your copy from this project's GitHub Releases: drag Miso into Applications, try opening it, and click **Done** in the warning. Then open **System Settings → Privacy & Security**, scroll to **Security**, click **Open Anyway** for Miso, and confirm **Open**. Authenticate if prompted. Later launches can open normally.
+
+          [Apple's instructions](https://support.apple.com/en-us/102445).
+          MAC_NOTES
           fi
           if gh release view "$TAG" --json isDraft > ../existing-release.json 2>/dev/null; then
             node -e "if (!require('../existing-release.json').isDraft) throw new Error('Refusing to replace an already published release')"
