@@ -34,6 +34,6 @@ for (const scenario of ['matching', 'stale sprite', 'missing sprite', 'stale ren
     });
     if (scenario === 'matching') assert.doesNotThrow(verify);
     else if (scenario === 'wrong version') assert.throws(verify, /Packaged version must match/);
-    else assert.throws(verify, scenario === 'stale renderer' ? /src\/renderer\/pet.js/ : /assets\/cat\/pixel\/none-idle.png/);
+    else assert.throws(verify, (error) => error.message.replaceAll('\\', '/').includes(scenario === 'stale renderer' ? renderer : sprite));
   });
 }

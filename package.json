@@ -1,6 +1,6 @@
 {
   "name": "miso-desktop-companion",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A little ghost cat for your desktop. Floats, plays, and keeps you company.",
   "main": "src/main.js",
   "author": "Adventnl",

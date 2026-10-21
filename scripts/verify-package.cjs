@@ -21,7 +21,7 @@ module.exports = function verifyPackage({ appOutDir, packager }) {
         verifyDirectory(file);
       } else {
         const source = fs.readFileSync(path.join(root, file));
-        assert.ok(source.equals(extractFile(archive, file)), `Packaged file differs from release source: ${file}`);
+        assert.ok(source.equals(extractFile(archive, path.normalize(file))), `Packaged file differs from release source: ${file}`);
         checked++;
       }
     }
