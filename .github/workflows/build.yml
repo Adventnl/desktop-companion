@@ -113,9 +113,13 @@ jobs:
           test -f "Miso-${TAG#v}-Windows-Portable-arm64.exe"
           test -f "Miso-${TAG#v}-mac-arm64.dmg"
           test -f "Miso-${TAG#v}-mac-x64.dmg"
+          test -f "Miso-${TAG#v}-mac-arm64.zip"
+          test -f "Miso-${TAG#v}-mac-x64.zip"
           sha256sum *.exe *.dmg *.zip > SHA256SUMS.txt
           cat > ../release-notes.md <<'NOTES'
           Open Miso and the cat appears immediately. Drag it anywhere; right-click for actions or Quit.
+
+          Includes the updated pixel artwork for all four skins, with crisp scaling, walking animations, and sleeping poses. Every packaged app's source and artwork are verified against the release source before creating downloads.
 
           ### Downloads
           - **Windows, no installation:** `Windows-Portable.exe` automatically selects the right architecture. Download and double-click. Smaller `Windows-Portable-x64.exe` (most PCs) and `Windows-Portable-arm64.exe` (ARM PCs) are also available.
